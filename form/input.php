@@ -1,13 +1,15 @@
 <?php
 
+session_start();
+
 // header関数は基本的にコードの冒頭に書く
 header('X-FRAME-OPTIONS:DENY');
 
-// if(!empty($_POST)){
-//   echo '<pre>';
-//   var_dump($_POST);
-//   echo '</pre>';
-// }
+if(!empty($_SESSION)){
+  echo '<pre>';
+  var_dump($_SESSION);
+  echo '</pre>';
+}
 
 // サニタイズ用の関数（XSS対策）
 function h($str)
@@ -35,6 +37,7 @@ if(!empty($_POST['btn_submit'])){
 
 <!-- 確認画面 -->
 <?php if($pageFlag === 1) : ?>
+<?php if($_POST['csrf'] === $_SESSION['csrfToken']) :?>
 <form method="POST" action="input.php">
 氏名
 <?php echo h($_POST['your_name']) ;?>
@@ -47,16 +50,30 @@ if(!empty($_POST['btn_submit'])){
 <!-- hiddenにすると、表示はされないが、裏で値を持っておくことができる -->
 <input type="hidden" name="your_name" value="<?php echo h($_POST['your_name']) ;?>">
 <input type="hidden" name="email" value="<?php echo h($_POST['email']) ;?>">
+<input type="hidden" name="csrf" value="<?php echo h($_POST['csrf']) ;?>">
 </form>
+<?php endif; ?>
 <?php endif; ?>
 
 <!-- 完了画面 -->
 <?php if($pageFlag === 2) : ?>
+<?php if($_POST['csrf'] === $_SESSION['csrfToken']) :?>
 送信が完了しました。
+<?php unset($_SESSION['csrfToken']);?>
+<?php endif; ?>
 <?php endif; ?>
 
 <!-- 入力画面 -->
 <?php if($pageFlag === 0) : ?>
+<!-- 暗号の生成 -->
+<?php
+if(!isset($_SESSION['csrfToken'])){
+  $csrfToken =  bin2hex(random_bytes(32));
+  $_SESSION['csrfToken'] = $csrfToken;
+}
+$token = $_SESSION['csrfToken'];
+?>
+
 <form method="post" action="input.php">
 氏名
 <input type="text" name="your_name" value="<?php if(!empty($_POST['your_name'])){echo h($_POST['your_name']) ;} ?>">
@@ -65,6 +82,7 @@ if(!empty($_POST['btn_submit'])){
 <input type="email" name="email" value="<?php if(!empty($_POST['email'])){echo h($_POST['email']) ;} ?>">
 <br>
 <input type="submit" name="btn_confirm" value="確認する">
+<input type="hidden" name="csrf" value="<?php echo $token; ?>">
 </form>
 <?php endif; ?>
 
