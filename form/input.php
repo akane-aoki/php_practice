@@ -2,6 +2,8 @@
 
 session_start();
 
+require 'validation.php';
+
 // header関数は基本的にコードの冒頭に書く
 header('X-FRAME-OPTIONS:DENY');
 
@@ -19,8 +21,9 @@ function h($str)
 
 // 入力、確認、完了を切り替える
 $pageFlag = 0;
+$errors = validation($_POST);
 
-if(!empty($_POST['btn_confirm'])){
+if(!empty($_POST['btn_confirm']) && empty($errors)){
   $pageFlag = 1;
 }
 if(!empty($_POST['btn_submit'])){
@@ -100,6 +103,17 @@ if(!isset($_SESSION['csrfToken'])){
 }
 $token = $_SESSION['csrfToken'];
 ?>
+
+<!-- エラーメッセージ -->
+<?php if(!empty($errors) && !empty($_POST['btn_confirm'])) : ?>
+<?php echo '<ul>' ;?>
+<?php
+  foreach($errors as $error){
+    echo '<li>' . $error . '</li>';
+  }
+?>
+<?php echo '</ul>' ;?>
+<?php endif ;?>
 
 <form method="post" action="input.php">
 氏名
